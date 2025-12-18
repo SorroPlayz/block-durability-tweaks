@@ -12,12 +12,17 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>spigot-snapshots</id>
-      <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-    </repository>
-  </repositories>
+<repositories>
+  <repository>
+    <id>spigot-snapshots</id>
+    <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+  </repository>
+
+  <repository>
+    <id>dmulloy2-repo</id>
+    <url>https://repo.dmulloy2.net/repository/public/</url>
+  </repository>
+</repositories>
 
   <dependencies>
     <!-- Build against Spigot API for widest compatibility (Paper + Mohist usually fine) -->
