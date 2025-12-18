@@ -1,5 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.sorro</groupId>
@@ -25,7 +27,7 @@
 </repositories>
 
   <dependencies>
-    <!-- Build against Spigot API for widest compatibility (Paper + Mohist usually fine) -->
+    <!-- Spigot API (Paper + Mohist compatible) -->
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
@@ -33,9 +35,9 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- ProtocolLib (provided by server/plugins) -->
+    <!-- ProtocolLib (Maven Central coordinates) -->
     <dependency>
-      <groupId>com.comphenix.protocol</groupId>
+      <groupId>net.dmulloy2</groupId>
       <artifactId>ProtocolLib</artifactId>
       <version>5.1.0</version>
       <scope>provided</scope>
@@ -54,4 +56,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>
