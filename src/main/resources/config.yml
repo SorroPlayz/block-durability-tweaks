@@ -1,0 +1,53 @@
+# =========================
+# BlockDurabilityTweaks
+# Paper 1.20.1 (+ Mohist likely)
+# =========================
+
+multipliers:
+  # Explosion block-damage emulation (filters explosion block list)
+  blast_resistance: 1.0
+
+  # Mining slowdown multiplier (ProtocolLib controller).
+  # > 1.0 = slower breaking (supported)
+  # < 1.0 = faster than vanilla (NOT truly possible without NMS; clamped to vanilla)
+  hardness: 2.0
+
+# Global per-block overrides (Material names)
+overrides:
+  OBSIDIAN:
+    blast_resistance: 2.0
+    hardness: 5.0
+  GLASS:
+    blast_resistance: 3.0
+    hardness: 1.0
+
+# Per-world multipliers + overrides (world name keys)
+worlds:
+  world:
+    multipliers:
+      blast_resistance: 1.0
+      hardness: 2.0
+    overrides:
+      OBSIDIAN:
+        hardness: 8.0
+
+explosions:
+  enabled: true
+
+mining:
+  enabled: true
+  intercept_break: true
+
+  # How often (ticks) to update crack animation
+  animation_tick_rate: 2
+
+  # Max distance (blocks) to send crack animation to nearby players
+  animation_radius: 64
+
+  # If player stops/aborts, clear cracks
+  clear_cracks_on_abort: true
+
+worldguard:
+  # If WorldGuard is present, only apply mining/breaking if WG would allow the player to build,
+  # unless they have permission: blockdurabilitytweaks.worldguard.bypass
+  respect_worldguard: true
