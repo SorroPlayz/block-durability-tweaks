@@ -32,7 +32,9 @@ public class MiningController implements Listener {
     private PacketListener digListener;
     private int taskId = -1;
 
-    // One session per player
+    // Simple tick counter (Spigot API doesn't expose Bukkit#getCurrentTick)
+    private long tickCounter = 0;
+
     private final Map<UUID, MiningSession> sessions = new ConcurrentHashMap<>();
 
     public MiningController(JavaPlugin plugin, BDTConfig config, ProtocolManager protocol, WorldGuardHook worldGuard) {
@@ -72,7 +74,6 @@ public class MiningController implements Listener {
         };
 
         protocol.addPacketListener(digListener);
-
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::tick, 1L, 1L);
     }
 
@@ -87,7 +88,8 @@ public class MiningController implements Listener {
         }
         for (UUID uuid : sessions.keySet()) {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null) sendCrackStage(p, sessions.get(uuid).block, -1);
+            MiningSession s = sessions.get(uuid);
+            if (p != null && s != null) sendCrackStage(p, s.block, -1);
         }
         sessions.clear();
     }
@@ -95,11 +97,7 @@ public class MiningController implements Listener {
     private void start(Player player, Block block) {
         if (!player.isOnline()) return;
         if (block.getType().isAir()) return;
-
-        // Respect WorldGuard if configured
-        if (!worldGuard.allowed(player, block.getLocation())) {
-            return;
-        }
+        if (!worldGuard.allowed(player, block.getLocation())) return;
 
         sessions.put(player.getUniqueId(), new MiningSession(block, System.currentTimeMillis()));
     }
@@ -121,13 +119,11 @@ public class MiningController implements Listener {
 
         if (!sameBlock(event.getBlock(), s.block)) return;
 
-        // If WorldGuard (or other plugins) already cancelled, we respect it and abort our session
         if (event.isCancelled()) {
             stop(player);
             return;
         }
 
-        // Measure vanilla completion time once
         long now = System.currentTimeMillis();
         if (s.vanillaCompleteMs < 0) {
             s.vanillaCompleteMs = now;
@@ -136,7 +132,6 @@ public class MiningController implements Listener {
             Material mat = s.block.getType();
             double mult = config.effectiveHardnessMultiplier(worldName, mat);
 
-            // Only reliably slows down
             if (mult <= 1.0) {
                 sessions.remove(player.getUniqueId());
                 sendCrackStage(player, s.block, -1);
@@ -148,7 +143,6 @@ public class MiningController implements Listener {
             s.targetBreakMs = s.startMs + targetDuration;
         }
 
-        // Cancel vanilla break while we control it
         if (s.targetBreakMs > 0 && now < s.targetBreakMs) {
             event.setCancelled(true);
             event.setDropItems(false);
@@ -164,7 +158,6 @@ public class MiningController implements Listener {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline()) return;
                 if (s.block.getType().isAir()) return;
-
                 if (!worldGuard.allowed(player, s.block.getLocation())) return;
 
                 BreakUtil.breakAsPlayer(player, s.block);
@@ -180,11 +173,12 @@ public class MiningController implements Listener {
     private void tick() {
         if (!config.miningEnabled() || !config.interceptBreak()) return;
 
-        long now = System.currentTimeMillis();
-        int tickRate = config.animationTickRate();
+        tickCounter++;
 
-        long serverTick = Bukkit.getCurrentTick();
-        if (serverTick % tickRate != 0) return;
+        int tickRate = config.animationTickRate();
+        if (tickCounter % tickRate != 0) return;
+
+        long now = System.currentTimeMillis();
 
         for (var entry : sessions.entrySet()) {
             Player player = Bukkit.getPlayer(entry.getKey());
@@ -199,7 +193,6 @@ public class MiningController implements Listener {
                 continue;
             }
 
-            // Before vanilla completion, client handles animation
             if (s.targetBreakMs <= 0) continue;
 
             long total = Math.max(1, s.targetBreakMs - s.startMs);
@@ -218,7 +211,6 @@ public class MiningController implements Listener {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!player.isOnline()) return;
                     if (s.block.getType().isAir()) return;
-
                     if (!worldGuard.allowed(player, s.block.getLocation())) return;
 
                     BreakUtil.breakAsPlayer(player, s.block);

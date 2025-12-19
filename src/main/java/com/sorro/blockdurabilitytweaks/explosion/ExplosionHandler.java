@@ -39,13 +39,11 @@ public class ExplosionHandler implements Listener {
             double mult = config.effectiveBlastMultiplier(worldName, mat);
             if (mult == 1.0) continue;
 
-            // Higher mult => more survive (removed from break list)
             if (mult > 1.0) {
-                double surviveChance = 1.0 - (1.0 / mult); // 2 => 0.5, 4 => 0.75
+                double surviveChance = 1.0 - (1.0 / mult);
                 surviveChance = Math.max(0.0, Math.min(1.0, surviveChance));
                 if (Math.random() < surviveChance) it.remove();
             }
-            // mult < 1.0 => keep vanilla list (not trying to force "extra break")
         }
     }
 }

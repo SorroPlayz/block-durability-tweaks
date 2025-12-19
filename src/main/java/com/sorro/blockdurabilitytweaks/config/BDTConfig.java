@@ -18,10 +18,8 @@ public record BDTConfig(
         int animationRadius,
         boolean clearCracksOnAbort,
         boolean respectWorldGuard,
-
         Map<Material, Double> blastOverrides,
         Map<Material, Double> hardnessOverrides,
-
         Map<String, WorldOverrides> worldOverrides
 ) {
 
@@ -48,10 +46,8 @@ public record BDTConfig(
 
         Map<Material, Double> blastOverrides = new EnumMap<>(Material.class);
         Map<Material, Double> hardnessOverrides = new EnumMap<>(Material.class);
-
         readOverrides(cfg.getConfigurationSection("overrides"), blastOverrides, hardnessOverrides, log);
 
-        // Per-world
         Map<String, WorldOverrides> worlds = new HashMap<>();
         ConfigurationSection worldsSec = cfg.getConfigurationSection("worlds");
         if (worldsSec != null) {

@@ -9,13 +9,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Method;
 
-/**
- * Lightweight WorldGuard hook via reflection.
- * - If WorldGuard is present and respect_worldguard=true:
- *     - We only apply mining/breaking if WorldGuardPlugin#canBuild(player, location) returns true
- *       OR player has permission blockdurabilitytweaks.worldguard.bypass
- * - If WorldGuard isn't present (or method not found), we assume allowed.
- */
 public final class WorldGuardHook {
 
     private final JavaPlugin plugin;
@@ -34,7 +27,6 @@ public final class WorldGuardHook {
         Method m = null;
         if (p != null) {
             try {
-                // com.sk89q.worldguard.bukkit.WorldGuardPlugin has canBuild(Player, Location)
                 m = p.getClass().getMethod("canBuild", Player.class, Location.class);
             } catch (Throwable t) {
                 plugin.getLogger().warning("WorldGuard detected, but couldn't reflect canBuild(Player, Location). Falling back to 'allowed'.");
@@ -47,10 +39,6 @@ public final class WorldGuardHook {
         this.cfg = cfg;
     }
 
-    public boolean isInstalled() {
-        return wgPlugin != null;
-    }
-
     public boolean allowed(Player player, Location loc) {
         if (!cfg.respectWorldGuard()) return true;
         if (wgPlugin == null || canBuildMethod == null) return true;
@@ -61,7 +49,6 @@ public final class WorldGuardHook {
             Object res = canBuildMethod.invoke(wgPlugin, player, loc);
             if (res instanceof Boolean b) return b;
         } catch (Throwable t) {
-            // If WG errors, default allow to avoid hard-locking mining
             plugin.getLogger().warning("WorldGuard hook error: " + t.getClass().getSimpleName() + ": " + t.getMessage());
             return true;
         }

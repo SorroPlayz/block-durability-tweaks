@@ -57,11 +57,8 @@ public class BlockDurabilityCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "BlockDurabilityTweaks Info");
                 sender.sendMessage(ChatColor.GRAY + "World: " + ChatColor.WHITE + world);
                 sender.sendMessage(ChatColor.GRAY + "Block: " + ChatColor.WHITE + mat.name());
-                sender.sendMessage(ChatColor.GRAY + "Hardness multiplier: " + ChatColor.WHITE + hard + ChatColor.DARK_GRAY + " (Note: only slows if > 1.0)");
+                sender.sendMessage(ChatColor.GRAY + "Hardness multiplier: " + ChatColor.WHITE + hard + ChatColor.DARK_GRAY + " (only slows if > 1.0)");
                 sender.sendMessage(ChatColor.GRAY + "Blast multiplier: " + ChatColor.WHITE + blast);
-
-                sender.sendMessage(ChatColor.DARK_GRAY + "Mining enabled: " + cfg.miningEnabled() +
-                        " | Explosions enabled: " + cfg.explosionsEnabled());
 
                 boolean wgRespect = cfg.respectWorldGuard();
                 boolean wgBypass = p.hasPermission("blockdurabilitytweaks.worldguard.bypass");

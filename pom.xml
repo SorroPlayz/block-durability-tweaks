@@ -14,20 +14,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-<repositories>
-  <repository>
-    <id>spigot-snapshots</id>
-    <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-  </repository>
-
-  <repository>
-    <id>dmulloy2-repo</id>
-    <url>https://repo.dmulloy2.net/repository/public/</url>
-  </repository>
-</repositories>
+  <repositories>
+    <repository>
+      <id>spigot-snapshots</id>
+      <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
 
   <dependencies>
-    <!-- Spigot API (Paper + Mohist compatible) -->
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>

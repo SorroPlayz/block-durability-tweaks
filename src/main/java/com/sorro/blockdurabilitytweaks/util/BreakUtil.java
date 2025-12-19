@@ -23,7 +23,6 @@ public final class BreakUtil {
     }
 
     public static boolean breakAsPlayer(Player player, Block block) {
-        // Fire event manually (so other plugins can cancel)
         BlockBreakEvent ev = new BlockBreakEvent(block, player);
         Bukkit.getPluginManager().callEvent(ev);
         if (ev.isCancelled()) return false;
@@ -34,8 +33,8 @@ public final class BreakUtil {
             }
         } catch (Throwable ignored) {}
 
-        // Fallback: best-effort Spigot path
+        // Spigot API fallback
         var tool = player.getInventory().getItemInMainHand();
-        return block.breakNaturally(tool, true);
+        return block.breakNaturally(tool);
     }
 }
