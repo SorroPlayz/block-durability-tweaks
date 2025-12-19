@@ -1,6 +1,6 @@
 package com.sorro.blockdurabilitytweaks.hook;
 
-import com.sorro.blockdurabilitytweaks.config.BDTConfig;
+import com.sorro.blockdurabilitytweaks.config.MainConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -12,12 +12,12 @@ import java.lang.reflect.Method;
 public final class WorldGuardHook {
 
     private final JavaPlugin plugin;
-    private volatile BDTConfig cfg;
+    private volatile MainConfig cfg;
 
     private final Plugin wgPlugin;
     private final Method canBuildMethod;
 
-    public WorldGuardHook(JavaPlugin plugin, BDTConfig cfg) {
+    public WorldGuardHook(JavaPlugin plugin, MainConfig cfg) {
         this.plugin = plugin;
         this.cfg = cfg;
 
@@ -29,13 +29,13 @@ public final class WorldGuardHook {
             try {
                 m = p.getClass().getMethod("canBuild", Player.class, Location.class);
             } catch (Throwable t) {
-                plugin.getLogger().warning("WorldGuard detected, but couldn't reflect canBuild(Player, Location). Falling back to 'allowed'.");
+                plugin.getLogger().warning("WorldGuard detected, but couldn't reflect canBuild(Player, Location). Falling back to allowed.");
             }
         }
         this.canBuildMethod = m;
     }
 
-    public void reload(BDTConfig cfg) {
+    public void reload(MainConfig cfg) {
         this.cfg = cfg;
     }
 

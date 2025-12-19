@@ -1,14 +1,13 @@
 name: BlockDurabilityTweaks
-version: 1.0.0
+version: 1.1.0
 main: com.sorro.blockdurabilitytweaks.BlockDurabilityTweaks
 api-version: "1.20"
-
 softdepend: [ProtocolLib, WorldGuard]
 
 commands:
   blockdurability:
     description: BlockDurabilityTweaks commands
-    usage: /blockdurability <info|reload>
+    usage: /blockdurability <info|reload|world>
 
 permissions:
   blockdurabilitytweaks.admin:

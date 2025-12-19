@@ -1,10 +1,15 @@
 package com.sorro.blockdurabilitytweaks.mining;
 
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.*;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.wrappers.BlockPosition;
-import com.sorro.blockdurabilitytweaks.config.BDTConfig;
+import com.comphenix.protocol.PacketType;
+import com.sorro.blockdurabilitytweaks.config.MainConfig;
+import com.sorro.blockdurabilitytweaks.config.ProfileManager;
+import com.sorro.blockdurabilitytweaks.config.WorldProfile;
 import com.sorro.blockdurabilitytweaks.hook.WorldGuardHook;
 import com.sorro.blockdurabilitytweaks.util.BreakUtil;
 import org.bukkit.Bukkit;
@@ -27,33 +32,34 @@ public class MiningController implements Listener {
     private final ProtocolManager protocol;
     private final WorldGuardHook worldGuard;
 
-    private volatile BDTConfig config;
+    private volatile MainConfig mainCfg;
+    private volatile ProfileManager profiles;
 
     private PacketListener digListener;
     private int taskId = -1;
 
-    // Simple tick counter (Spigot API doesn't expose Bukkit#getCurrentTick)
     private long tickCounter = 0;
-
     private final Map<UUID, MiningSession> sessions = new ConcurrentHashMap<>();
 
-    public MiningController(JavaPlugin plugin, BDTConfig config, ProtocolManager protocol, WorldGuardHook worldGuard) {
+    public MiningController(JavaPlugin plugin, MainConfig mainCfg, ProfileManager profiles, ProtocolManager protocol, WorldGuardHook worldGuard) {
         this.plugin = plugin;
-        this.config = config;
+        this.mainCfg = mainCfg;
+        this.profiles = profiles;
         this.protocol = protocol;
         this.worldGuard = worldGuard;
     }
 
-    public void reload(BDTConfig newConfig) {
-        this.config = newConfig;
-        this.worldGuard.reload(newConfig);
+    public void reload(MainConfig cfg, ProfileManager pm) {
+        this.mainCfg = cfg;
+        this.profiles = pm;
+        this.worldGuard.reload(cfg);
     }
 
     public void enable() {
         digListener = new PacketAdapter(plugin, ListenerPriority.NORMAL, PacketType.Play.Client.BLOCK_DIG) {
             @Override
             public void onPacketReceiving(PacketEvent event) {
-                if (!config.miningEnabled() || !config.interceptBreak()) return;
+                if (!mainCfg.miningEnabled() || !mainCfg.interceptBreak()) return;
 
                 Player player = event.getPlayer();
                 var packet = event.getPacket();
@@ -86,11 +92,6 @@ public class MiningController implements Listener {
             Bukkit.getScheduler().cancelTask(taskId);
             taskId = -1;
         }
-        for (UUID uuid : sessions.keySet()) {
-            Player p = Bukkit.getPlayer(uuid);
-            MiningSession s = sessions.get(uuid);
-            if (p != null && s != null) sendCrackStage(p, s.block, -1);
-        }
         sessions.clear();
     }
 
@@ -103,20 +104,16 @@ public class MiningController implements Listener {
     }
 
     private void stop(Player player) {
-        MiningSession s = sessions.remove(player.getUniqueId());
-        if (s != null && config.clearCracksOnAbort()) {
-            sendCrackStage(player, s.block, -1);
-        }
+        sessions.remove(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!config.miningEnabled() || !config.interceptBreak()) return;
+        if (!mainCfg.miningEnabled() || !mainCfg.interceptBreak()) return;
 
         Player player = event.getPlayer();
         MiningSession s = sessions.get(player.getUniqueId());
         if (s == null) return;
-
         if (!sameBlock(event.getBlock(), s.block)) return;
 
         if (event.isCancelled()) {
@@ -129,12 +126,13 @@ public class MiningController implements Listener {
             s.vanillaCompleteMs = now;
 
             String worldName = s.block.getWorld().getName();
+            WorldProfile prof = profiles.getActive(worldName);
             Material mat = s.block.getType();
-            double mult = config.effectiveHardnessMultiplier(worldName, mat);
+            double mult = prof.hardnessFor(mat);
 
+            // Only slows mining when > 1.0. <= 1.0 = vanilla behavior.
             if (mult <= 1.0) {
                 sessions.remove(player.getUniqueId());
-                sendCrackStage(player, s.block, -1);
                 return;
             }
 
@@ -153,13 +151,11 @@ public class MiningController implements Listener {
             event.setExpToDrop(0);
 
             sessions.remove(player.getUniqueId());
-            sendCrackStage(player, s.block, -1);
 
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline()) return;
                 if (s.block.getType().isAir()) return;
                 if (!worldGuard.allowed(player, s.block.getLocation())) return;
-
                 BreakUtil.breakAsPlayer(player, s.block);
             });
         }
@@ -171,11 +167,10 @@ public class MiningController implements Listener {
     }
 
     private void tick() {
-        if (!config.miningEnabled() || !config.interceptBreak()) return;
+        if (!mainCfg.miningEnabled() || !mainCfg.interceptBreak()) return;
 
         tickCounter++;
-
-        int tickRate = config.animationTickRate();
+        int tickRate = mainCfg.animationTickRate();
         if (tickCounter % tickRate != 0) return;
 
         long now = System.currentTimeMillis();
@@ -185,57 +180,19 @@ public class MiningController implements Listener {
             if (player == null || !player.isOnline()) continue;
 
             MiningSession s = entry.getValue();
-            if (s == null || !s.active) continue;
-
-            if (s.block.getType().isAir()) {
-                sendCrackStage(player, s.block, -1);
-                sessions.remove(player.getUniqueId());
-                continue;
-            }
+            if (s == null) continue;
 
             if (s.targetBreakMs <= 0) continue;
 
-            long total = Math.max(1, s.targetBreakMs - s.startMs);
-            long elapsed = Math.max(0, now - s.startMs);
-            double pct = Math.max(0.0, Math.min(1.0, (double) elapsed / (double) total));
-
-            int stage = (int) Math.floor(pct * 10.0);
-            if (stage >= 10) stage = 9;
-
-            sendCrackStage(player, s.block, stage);
-
             if (now >= s.targetBreakMs) {
                 sessions.remove(player.getUniqueId());
-                sendCrackStage(player, s.block, -1);
-
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!player.isOnline()) return;
                     if (s.block.getType().isAir()) return;
                     if (!worldGuard.allowed(player, s.block.getLocation())) return;
-
                     BreakUtil.breakAsPlayer(player, s.block);
                 });
             }
-        }
-    }
-
-    private void sendCrackStage(Player sourcePlayer, Block block, int stage) {
-        if (block == null) return;
-
-        int radius = config.animationRadius();
-        int breakerId = sourcePlayer.getEntityId();
-
-        for (Player viewer : sourcePlayer.getWorld().getPlayers()) {
-            if (viewer.getLocation().distanceSquared(block.getLocation().add(0.5, 0.5, 0.5)) > (radius * radius)) continue;
-
-            PacketContainer packet = protocol.createPacket(PacketType.Play.Server.BLOCK_BREAK_ANIMATION);
-            packet.getIntegers().write(0, breakerId);
-            packet.getBlockPositionModifier().write(0, new BlockPosition(block.getX(), block.getY(), block.getZ()));
-            packet.getIntegers().write(1, stage);
-
-            try {
-                protocol.sendServerPacket(viewer, packet);
-            } catch (Exception ignored) {}
         }
     }
 

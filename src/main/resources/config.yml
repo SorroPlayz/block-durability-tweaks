@@ -1,27 +1,41 @@
-multipliers:
-  blast_resistance: 1.0
-  hardness: 2.0
+# BlockDurabilityTweaks (1.20.1)
+#
+# VANILLA-BY-DEFAULT DESIGN
+# -------------------------
+# This plugin is designed to do NOTHING unless you explicitly load a profile
+# that changes multipliers/overrides.
+#
+# Where things live on disk:
+#   plugins/BlockDurabilityTweaks/
+#     worlds/<world>/
+#       vanilla.yml                     <-- generated vanilla reference values (all blocks)
+#       profiles/<profile>.yml          <-- your named profiles ("world saves")
+#       profiles/vanilla.yml            <-- generated: does nothing (multipliers 1.0, no overrides)
+#     README-GENERATED.txt              <-- generated help file with commands + layout
+#
+# Quick start:
+#   1) Start server once (generates folders + vanilla.yml)
+#   2) Edit a profile file (or create a new one) in worlds/<world>/profiles/
+#   3) Load it: /blockdurability world load <world> <profile>
+#   4) Reload: /blockdurability reload
+#
+features:
+  explosions:
+    enabled: true
 
-overrides:
-  OBSIDIAN:
-    blast_resistance: 2.0
-    hardness: 5.0
-
-worlds:
-  world:
-    multipliers:
-      blast_resistance: 1.0
-      hardness: 2.0
-
-explosions:
-  enabled: true
-
-mining:
-  enabled: true
-  intercept_break: true
-  animation_tick_rate: 2
-  animation_radius: 64
-  clear_cracks_on_abort: true
+  mining:
+    enabled: true
+    # Only slows mining when effective hardness multiplier > 1.0
+    intercept_break: true
+    animation_tick_rate: 2
+    animation_radius: 64
+    clear_cracks_on_abort: true
 
 worldguard:
+  # If true, WorldGuard's canBuild check is respected unless player has bypass perm.
   respect_worldguard: true
+
+profiles:
+  # Active profile per world. If a world is not listed, it uses "vanilla".
+  active_per_world:
+    world: vanilla

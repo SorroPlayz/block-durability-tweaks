@@ -33,7 +33,6 @@ public final class BreakUtil {
             }
         } catch (Throwable ignored) {}
 
-        // Spigot API fallback
         var tool = player.getInventory().getItemInMainHand();
         return block.breakNaturally(tool);
     }
