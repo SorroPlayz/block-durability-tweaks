@@ -16,6 +16,8 @@ import com.sorro.blockdurabilitytweaks.util.VanillaStatsUtil;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.NamespacedKey;
+import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -297,7 +299,13 @@ public class MiningController implements Listener {
         if (!cfg.perToolMultipliersEnabled()) return 1.0;
         ItemStack tool = player.getInventory().getItemInMainHand();
         Material toolType = (tool == null) ? Material.AIR : tool.getType();
-        int eff = tool != null ? tool.getEnchantmentLevel(Enchantment.EFFICIENCY) : 0;
+        int eff = 0;
+        if (tool != null) {
+            Enchantment effEnchant = Enchantment.getByKey(NamespacedKey.minecraft("efficiency"));
+            if (effEnchant != null) {
+                eff = tool.getEnchantmentLevel(effEnchant);
+            }
+        }
         return cfg.toolMultipliers().forTool(toolType, eff);
     }
 
