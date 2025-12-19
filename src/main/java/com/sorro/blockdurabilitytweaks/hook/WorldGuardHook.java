@@ -67,6 +67,10 @@ public class WorldGuardHook {
         return available;
     }
 
+    public boolean allowed(Player player, Location loc) {
+        return canBuild(player, loc);
+    }
+
     public boolean canBuild(Player player, Location loc) {
         if (!cfg.respectWorldGuard() || !available || loc == null) return true;
         try {

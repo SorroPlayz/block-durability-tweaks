@@ -8,6 +8,10 @@ import org.bukkit.inventory.ItemStack;
 public final class BreakUtil {
     private BreakUtil() {}
 
+    public static void breakAsPlayer(Player player, Block block) {
+        breakLikePlayer(player, block);
+    }
+
     public static void breakLikePlayer(Player player, Block block) {
         if (player == null || block == null) return;
 

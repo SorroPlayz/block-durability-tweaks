@@ -19,7 +19,9 @@ public final class BlockDurabilityTweaks extends JavaPlugin {
     private MainConfig mainCfg;
     private ProfileManager profiles;
     private MiningController miningController;
-    private ProfileGui profileGui;
+    
+    private com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler explosionHandler;
+private ProfileGui profileGui;
     private EventScheduler eventScheduler;
     private DamageStore damageStore;
 
@@ -47,7 +49,7 @@ public final class BlockDurabilityTweaks extends JavaPlugin {
         }
 
         if (mainCfg.explosionsEnabled()) {
-            Bukkit.getPluginManager().registerEvents(new ExplosionHandler(this), this);
+            Bukkit.getPluginManager().registerEvents(new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, cfg, profiles), this);
         }
 
         if (mainCfg.miningEnabled()) {
@@ -78,7 +80,9 @@ public final class BlockDurabilityTweaks extends JavaPlugin {
         reloadConfig();
         this.mainCfg = MainConfig.from(getConfig());
         this.profiles = new ProfileManager(this, mainCfg);
-        this.profiles.ensureAllLoaded();
+        
+        explosionHandler = new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, cfg, profiles);
+this.profiles.ensureAllLoaded();
 
         this.damageStore = new DamageStore(this, mainCfg);
         this.damageStore.loadAllFromDisk();
