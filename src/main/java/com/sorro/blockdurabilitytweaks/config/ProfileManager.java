@@ -31,7 +31,7 @@ public class ProfileManager {
 
         for (World w : Bukkit.getWorlds()) {
             ensureWorldFiles(w.getName());
-            loadActiveProfile(w.getName());
+            loadProfile(w.getName(), main.activeProfileForWorld(w.getName()));
         }
     }
 
@@ -48,8 +48,7 @@ public class ProfileManager {
         File vanillaProfile = profileFile(worldName, "vanilla");
         if (!vanillaProfile.exists()) {
             YamlConfiguration y = new YamlConfiguration();
-            y.set("info.name", "vanilla");
-            y.set("info.description", "Vanilla profile (no changes). Multipliers 1.0, no overrides.");
+            y.set("info.description", "Vanilla (no changes). Multipliers 1.0, no overrides.");
             y.set("multipliers.hardness", 1.0);
             y.set("multipliers.blast_resistance", 1.0);
             y.createSection("overrides");
@@ -75,11 +74,6 @@ public class ProfileManager {
             }
         }
         return names;
-    }
-
-    public boolean loadActiveProfile(String worldName) {
-        String profile = main.activeProfileForWorld(worldName);
-        return loadProfile(worldName, profile);
     }
 
     public boolean loadProfile(String worldName, String profileName) {
@@ -119,7 +113,6 @@ public class ProfileManager {
         File f = profileFile(worldName, profileName);
         YamlConfiguration y = new YamlConfiguration();
 
-        y.set("info.name", profileName);
         y.set("info.description", "Profile saved from currently active in-memory settings.");
         y.set("multipliers.hardness", active.hardnessMultiplier);
         y.set("multipliers.blast_resistance", active.blastMultiplier);

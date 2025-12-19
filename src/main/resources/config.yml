@@ -1,41 +1,104 @@
+# ============================================================
 # BlockDurabilityTweaks (1.20.1)
+# Stage 1+2: Config foundation + Per-tool multipliers
+# ============================================================
 #
-# VANILLA-BY-DEFAULT DESIGN
-# -------------------------
-# This plugin is designed to do NOTHING unless you explicitly load a profile
-# that changes multipliers/overrides.
+# DESIGN GOALS
+# - "Vanilla by default": nothing changes unless you load a non-vanilla profile.
+# - Clear toggles: features can be enabled/disabled without deleting config.
+# - Structured per-world profiles:
+#     plugins/BlockDurabilityTweaks/worlds/<world>/profiles/<profile>.yml
+# - Vanilla reference dump:
+#     plugins/BlockDurabilityTweaks/worlds/<world>/vanilla.yml
 #
-# Where things live on disk:
-#   plugins/BlockDurabilityTweaks/
-#     worlds/<world>/
-#       vanilla.yml                     <-- generated vanilla reference values (all blocks)
-#       profiles/<profile>.yml          <-- your named profiles ("world saves")
-#       profiles/vanilla.yml            <-- generated: does nothing (multipliers 1.0, no overrides)
-#     README-GENERATED.txt              <-- generated help file with commands + layout
+# QUICK START
+# 1) Start server once (generates folders + vanilla.yml + vanilla profile)
+# 2) Copy vanilla profile to a new name:
+#      worlds/world/profiles/rust_hardcore.yml
+#    Edit multipliers/overrides there
+# 3) Load it:
+#      /blockdurability world load world rust_hardcore
 #
-# Quick start:
-#   1) Start server once (generates folders + vanilla.yml)
-#   2) Edit a profile file (or create a new one) in worlds/<world>/profiles/
-#   3) Load it: /blockdurability world load <world> <profile>
-#   4) Reload: /blockdurability reload
+# COMMANDS
+# - /blockdurability info
+# - /blockdurability reload
+# - /blockdurability world list [world]
+# - /blockdurability world load <world> <profile>
+# - /blockdurability world save <world> <profile>
+# - /blockdurability world reset <world>
+# - /blockdurability world vanilla <world>
 #
+# ------------------------------------------------------------
+# FEATURE TOGGLES
+# ------------------------------------------------------------
 features:
+  # Mode is future-proofed:
+  # - MULTIPLIER: Uses your profile multipliers/overrides (current system)
+  # - HP: Rust-style block HP system (Stage 6 - not yet)
+  mode: MULTIPLIER  # MULTIPLIER | HP
+
   explosions:
     enabled: true
 
   mining:
     enabled: true
-    # Only slows mining when effective hardness multiplier > 1.0
     intercept_break: true
     animation_tick_rate: 2
     animation_radius: 64
     clear_cracks_on_abort: true
 
+  # Stage 2: Per-tool multipliers (netherite vs iron etc)
+  per_tool_multipliers: false
+
+  # Stage 3 (later): Per-biome modifiers
+  per_biome_modifiers: false
+
+  # Stage 4 (later): GUI selector
+  gui_profile_selector: false
+
+  # Stage 5 (later): Timed profile events
+  timed_profile_events: false
+
+  # Stage 6 (later): Remembered block damage / HP persistence
+  persistent_block_damage: false
+
 worldguard:
-  # If true, WorldGuard's canBuild check is respected unless player has bypass perm.
   respect_worldguard: true
 
 profiles:
-  # Active profile per world. If a world is not listed, it uses "vanilla".
+  # Which profile is active per world.
+  # If a world is missing here, it defaults to "vanilla".
   active_per_world:
     world: vanilla
+
+# ------------------------------------------------------------
+# PER-TOOL MULTIPLIERS (Stage 2)
+# ------------------------------------------------------------
+# Applied only when features.per_tool_multipliers = true
+#
+# How it works (MULTIPLIER mode):
+# - The profile provides a hardness multiplier/override (e.g. 2.0 = twice as long)
+# - The tool multiplier multiplies that again (e.g. iron pickaxe 1.30)
+# - Final mining slowdown = profileHardness * toolMultiplier
+#
+# Notes:
+# - This controller only SLOWS mining when final multiplier > 1.0.
+#   (values <= 1.0 behave vanilla)
+# - You can define ANY tool item here, not just pickaxes.
+tool_multipliers:
+  enabled: false
+  default: 1.0
+
+  by_tool:
+    WOODEN_PICKAXE: 2.00
+    STONE_PICKAXE: 1.60
+    IRON_PICKAXE: 1.30
+    DIAMOND_PICKAXE: 1.15
+    NETHERITE_PICKAXE: 1.10
+
+  # Optional: Efficiency scales the tool multiplier per level (multiplicative).
+  # Example: per_level 0.92 means each level multiplies toolMult by 0.92:
+  #   L1: x0.92, L2: x0.8464, L3: x0.778..., etc.
+  efficiency:
+    enabled: true
+    per_level: 0.92
