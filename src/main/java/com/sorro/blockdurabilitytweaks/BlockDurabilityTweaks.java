@@ -49,7 +49,7 @@ private ProfileGui profileGui;
         }
 
         if (mainCfg.explosionsEnabled()) {
-            Bukkit.getPluginManager().registerEvents(new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, cfg, profiles), this);
+            Bukkit.getPluginManager().registerEvents(new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, mainCfg, profiles), this);
         }
 
         if (mainCfg.miningEnabled()) {
@@ -81,7 +81,7 @@ private ProfileGui profileGui;
         this.mainCfg = MainConfig.from(getConfig());
         this.profiles = new ProfileManager(this, mainCfg);
         
-        explosionHandler = new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, cfg, profiles);
+        explosionHandler = new com.sorro.blockdurabilitytweaks.explosion.ExplosionHandler(this, mainCfg, profiles);
 this.profiles.ensureAllLoaded();
 
         this.damageStore = new DamageStore(this, mainCfg);
