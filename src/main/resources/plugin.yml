@@ -1,5 +1,5 @@
 name: BlockDurabilityTweaks
-version: 1.2.0
+version: 1.2.1
 main: com.sorro.blockdurabilitytweaks.BlockDurabilityTweaks
 api-version: "1.20"
 softdepend: [ProtocolLib, WorldGuard]

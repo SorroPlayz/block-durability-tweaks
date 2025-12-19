@@ -11,6 +11,11 @@ public final class GeneratedReadme {
 
     private GeneratedReadme() {}
 
+    /** Backwards-compatible alias if older code calls ensureGenerated(...) */
+    public static void ensureGenerated(JavaPlugin plugin) {
+        write(plugin);
+    }
+
     public static void write(JavaPlugin plugin) {
         File out = new File(plugin.getDataFolder(), "README-GENERATED.txt");
         if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
