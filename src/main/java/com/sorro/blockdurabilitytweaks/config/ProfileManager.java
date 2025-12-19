@@ -58,6 +58,38 @@ public class ProfileManager {
         }
     }
 
+    private final Map<String, Map<String, WorldProfile>> cache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public WorldProfile getOrLoad(String worldName, String profileName) {
+        cache.putIfAbsent(worldName, new java.util.concurrent.ConcurrentHashMap<>());
+        var m = cache.get(worldName);
+        var ex = m.get(profileName);
+        if (ex != null) return ex;
+        // load by calling existing loadProfile logic into a temp
+        File f = profileFile(worldName, profileName);
+        if (!f.exists()) {
+            if (!"vanilla".equalsIgnoreCase(profileName)) return getOrLoad(worldName, "vanilla");
+            WorldProfile p = new WorldProfile(worldName, "vanilla");
+            m.put(profileName, p);
+            return p;
+        }
+        YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
+        WorldProfile p = new WorldProfile(worldName, profileName);
+        p.hardnessMultiplier = y.getDouble("multipliers.hardness", 1.0);
+        p.blastMultiplier = y.getDouble("multipliers.blast_resistance", 1.0);
+        ConfigurationSection ov = y.getConfigurationSection("overrides");
+        if (ov != null) {
+            for (String key : ov.getKeys(false)) {
+                Material mat = Material.matchMaterial(key);
+                if (mat == null || !mat.isBlock()) continue;
+                if (ov.contains(key + ".hardness")) p.hardnessOverrides.put(mat, ov.getDouble(key + ".hardness"));
+                if (ov.contains(key + ".blast_resistance")) p.blastOverrides.put(mat, ov.getDouble(key + ".blast_resistance"));
+            }
+        }
+        m.put(profileName, p);
+        return p;
+    }
+
     public WorldProfile getActive(String worldName) {
         return activeProfiles.getOrDefault(worldName, new WorldProfile(worldName, "vanilla"));
     }

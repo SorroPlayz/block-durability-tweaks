@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class WorldProfile {
+
     public final String worldName;
     public final String profileName;
 
@@ -20,11 +21,13 @@ public class WorldProfile {
         this.profileName = profileName;
     }
 
-    public double hardnessFor(Material mat) {
-        return hardnessOverrides.getOrDefault(mat, hardnessMultiplier);
+    /** Returns multiplier for hardness (not absolute vanilla value). */
+    public double hardnessFor(Material m) {
+        return hardnessOverrides.getOrDefault(m, hardnessMultiplier);
     }
 
-    public double blastFor(Material mat) {
-        return blastOverrides.getOrDefault(mat, blastMultiplier);
+    /** Returns multiplier for blast resistance (not absolute vanilla value). */
+    public double blastFor(Material m) {
+        return blastOverrides.getOrDefault(m, blastMultiplier);
     }
 }

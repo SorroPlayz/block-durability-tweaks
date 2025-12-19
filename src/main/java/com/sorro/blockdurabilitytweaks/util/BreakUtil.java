@@ -1,39 +1,23 @@
 package com.sorro.blockdurabilitytweaks.util;
 
-import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockBreakEvent;
-
-import java.lang.reflect.Method;
+import org.bukkit.inventory.ItemStack;
 
 public final class BreakUtil {
     private BreakUtil() {}
 
-    private static final Method paperBreakBlock;
+    public static void breakLikePlayer(Player player, Block block) {
+        if (player == null || block == null) return;
 
-    static {
-        Method m;
-        try {
-            m = Player.class.getMethod("breakBlock", Block.class);
-        } catch (Throwable ignored) {
-            m = null;
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            block.setType(org.bukkit.Material.AIR, false);
+            return;
         }
-        paperBreakBlock = m;
-    }
 
-    public static boolean breakAsPlayer(Player player, Block block) {
-        BlockBreakEvent ev = new BlockBreakEvent(block, player);
-        Bukkit.getPluginManager().callEvent(ev);
-        if (ev.isCancelled()) return false;
-
-        try {
-            if (paperBreakBlock != null) {
-                return (boolean) paperBreakBlock.invoke(player, block);
-            }
-        } catch (Throwable ignored) {}
-
-        var tool = player.getInventory().getItemInMainHand();
-        return block.breakNaturally(tool);
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        // Spigot API only has breakNaturally() and breakNaturally(ItemStack)
+        block.breakNaturally(tool);
     }
 }

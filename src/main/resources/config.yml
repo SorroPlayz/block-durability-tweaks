@@ -155,3 +155,24 @@ damage_memory:
   cracks:
     enabled: true
     broadcast_radius: 64
+
+
+# ------------------------------------------------------------
+# WorldGuard region -> profile auto-binding
+# ------------------------------------------------------------
+region_profile_binding:
+  enabled: false
+  worlds: {}
+  # Example:
+  # worlds:
+  #   world:
+  #     regions:
+  #       spawn: vanilla
+  #       raid_zone: raid_hour
+
+# ------------------------------------------------------------
+# HP ActionBar display
+# ------------------------------------------------------------
+hp_actionbar:
+  enabled: false
+  format: "&cHP &7[&f{hp}&7/&f{max}&7] &8- &f{block}"

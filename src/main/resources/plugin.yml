@@ -1,11 +1,12 @@
 name: BlockDurabilityTweaks
-version: 1.6.0
+version: 1.7.1
 main: com.sorro.blockdurabilitytweaks.BlockDurabilityTweaks
 api-version: "1.20"
 softdepend: [ProtocolLib, WorldGuard]
 
 commands:
   blockdurability:
+    aliases: [bd]
     description: BlockDurabilityTweaks commands
     usage: /blockdurability <info|reload|gui|world|events>
 
@@ -20,4 +21,8 @@ permissions:
   blockdurabilitytweaks.events:
     default: op
   blockdurabilitytweaks.gui.open:
+    default: op
+
+permissions:
+  blockdurabilitytweaks.inspect:
     default: op

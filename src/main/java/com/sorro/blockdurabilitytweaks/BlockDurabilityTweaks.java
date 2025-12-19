@@ -34,6 +34,8 @@ public final class BlockDurabilityTweaks extends JavaPlugin {
         getCommand("blockdurability").setExecutor(cmd);
         getCommand("blockdurability").setTabCompleter(cmd);
 
+        Bukkit.getPluginManager().registerEvents(new com.sorro.blockdurabilitytweaks.inspect.InspectListener(this), this);
+
         if (mainCfg.guiEnabled()) {
             profileGui = new ProfileGui(this);
             Bukkit.getPluginManager().registerEvents(profileGui, this);
@@ -56,6 +58,7 @@ public final class BlockDurabilityTweaks extends JavaPlugin {
                 miningController = new MiningController(this, mainCfg, profiles, damageStore, ProtocolLibrary.getProtocolManager(), wg);
                 miningController.enable();
                 Bukkit.getPluginManager().registerEvents(miningController, this);
+        Bukkit.getPluginManager().registerEvents(explosionHandler, this);
             }
         }
 

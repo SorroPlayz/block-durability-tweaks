@@ -6,7 +6,7 @@
 
   <groupId>com.sorro</groupId>
   <artifactId>block-durability-tweaks</artifactId>
-  <version>1.6.0</version>
+  <version>1.7.1</version>
   <name>BlockDurabilityTweaks</name>
 
   <properties>

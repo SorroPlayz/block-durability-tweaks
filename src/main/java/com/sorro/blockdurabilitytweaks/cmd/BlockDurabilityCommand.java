@@ -38,6 +38,14 @@ public class BlockDurabilityCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(ChatColor.GREEN + "BlockDurabilityTweaks reloaded.");
                 return true;
             }
+            case "inspect" -> {
+                if (!sender.hasPermission("blockdurabilitytweaks.inspect")) return noPerm(sender);
+                if (!(sender instanceof org.bukkit.entity.Player p)) { sender.sendMessage(org.bukkit.ChatColor.RED + "In-game only."); return true; }
+                p.getInventory().addItem(com.sorro.blockdurabilitytweaks.inspect.InspectWand.create(plugin));
+                p.sendMessage(org.bukkit.ChatColor.GREEN + "Inspect wand added to your inventory.");
+                return true;
+            }
+
             case "gui" -> {
                 if (!(sender instanceof Player p)) { sender.sendMessage(ChatColor.RED + "In-game only."); return true; }
                 ProfileGui gui = plugin.profileGui();
@@ -172,7 +180,7 @@ public class BlockDurabilityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "BlockDurabilityTweaks");
         sender.sendMessage(ChatColor.GRAY + "/blockdurability info");
         sender.sendMessage(ChatColor.GRAY + "/blockdurability reload");
-        sender.sendMessage(ChatColor.GRAY + "/blockdurability gui");
+        sender.sendMessage(ChatColor.GRAY + "/blockdurability inspect\n/blockdurability gui");
         sender.sendMessage(ChatColor.GRAY + "/blockdurability world ...");
         sender.sendMessage(ChatColor.GRAY + "/blockdurability events ...");
     }
@@ -187,7 +195,7 @@ public class BlockDurabilityCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             String p = args[0].toLowerCase(Locale.ROOT);
-            for (String s : List.of("info","reload","gui","world","events")) {
+            for (String s : List.of("info","reload","inspect","gui","world","events")) {
                 if (s.startsWith(p)) out.add(s);
             }
             return out;

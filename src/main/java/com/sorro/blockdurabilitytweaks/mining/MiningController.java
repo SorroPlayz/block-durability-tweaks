@@ -14,6 +14,8 @@ import com.sorro.blockdurabilitytweaks.util.BreakUtil;
 import com.sorro.blockdurabilitytweaks.util.VanillaStats;
 import com.sorro.blockdurabilitytweaks.util.VanillaStatsUtil;
 import org.bukkit.*;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.NamespacedKey;
@@ -43,6 +45,19 @@ public class MiningController implements Listener {
 
     private final Map<UUID, MiningSession> sessions = new ConcurrentHashMap<>();
     private int saveTick = 0;
+
+    private WorldProfile resolveProfile(Block block) {
+        String world = block.getWorld().getName();
+        if (!cfg.regionBindingEnabled()) return profiles.getActive(world);
+        var map = cfg.regionBindingsForWorld(world);
+        if (map == null || map.isEmpty()) return profiles.getActive(world);
+        String region = worldGuard.highestPriorityRegionIdAt(block.getLocation());
+        if (region == null) return profiles.getActive(world);
+        String prof = map.get(region);
+        if (prof == null) return profiles.getActive(world);
+        return profiles.getOrLoad(world, prof);
+    }
+
 
     public MiningController(JavaPlugin plugin, MainConfig cfg, ProfileManager profiles, DamageStore damageStore, ProtocolManager protocol, WorldGuardHook worldGuard) {
         this.plugin = plugin;
@@ -288,7 +303,7 @@ public class MiningController implements Listener {
         }
 
         // profile hardness influences HP toughness (hardness >1 => tougher)
-        WorldProfile prof = profiles.getActive(block.getWorld().getName());
+        WorldProfile prof = resolveProfile(block);
         double profile = prof.hardnessFor(block.getType());
         dmg = (int)Math.max(1, Math.round(dmg * (1.0 / Math.max(0.1, profile))));
 
@@ -352,6 +367,16 @@ public class MiningController implements Listener {
         if (a == null || b == null) return false;
         if (a.getWorld() != b.getWorld()) return false;
         return a.getX() == b.getX() && a.getY() == b.getY() && a.getZ() == b.getZ();
+    }
+
+    private void sendActionBar(Player p, Block block, int hp, int maxHp) {
+        if (!cfg.hpActionbarEnabled()) return;
+        String fmt = cfg.hpActionbarFormat();
+        String msg = fmt.replace("{hp}", String.valueOf(hp))
+                .replace("{max}", String.valueOf(maxHp))
+                .replace("{block}", block.getType().name());
+        msg = ChatColor.translateAlternateColorCodes('&', msg);
+        try { p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg)); } catch (Throwable ignored) {}
     }
 
     private int clamp(int v, int min, int max) {

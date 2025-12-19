@@ -1,53 +1,52 @@
 package com.sorro.blockdurabilitytweaks.explosion;
 
-import com.sorro.blockdurabilitytweaks.BlockDurabilityTweaks;
+import com.sorro.blockdurabilitytweaks.config.MainConfig;
+import com.sorro.blockdurabilitytweaks.config.ProfileManager;
 import com.sorro.blockdurabilitytweaks.config.WorldProfile;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Iterator;
-import java.util.List;
+import java.util.Random;
 
 public class ExplosionHandler implements Listener {
 
-    private final BlockDurabilityTweaks plugin;
+    private final Plugin plugin;
+    private volatile MainConfig cfg;
+    private volatile ProfileManager profiles;
+    private final Random rng = new Random();
 
-    public ExplosionHandler(BlockDurabilityTweaks plugin) {
+    public ExplosionHandler(Plugin plugin, MainConfig cfg, ProfileManager profiles) {
         this.plugin = plugin;
+        this.cfg = cfg;
+        this.profiles = profiles;
+    }
+
+    public void reload(MainConfig cfg, ProfileManager profiles) {
+        this.cfg = cfg;
+        this.profiles = profiles;
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onEntityExplode(EntityExplodeEvent e) {
-        if (!plugin.mainConfig().explosionsEnabled()) return;
-        adjust(e.blockList(), e.getLocation().getWorld().getName());
-    }
+    public void onExplode(EntityExplodeEvent e) {
+        if (!cfg.explosionsEnabled()) return;
 
-    @EventHandler(ignoreCancelled = true)
-    public void onBlockExplode(BlockExplodeEvent e) {
-        if (!plugin.mainConfig().explosionsEnabled()) return;
-        adjust(e.blockList(), e.getBlock().getWorld().getName());
-    }
-
-    private void adjust(List<Block> blocks, String worldName) {
-        WorldProfile prof = plugin.profiles().getActive(worldName);
-
-        Iterator<Block> it = blocks.iterator();
+        // Best-effort: higher blast multiplier => fewer blocks break.
+        Iterator<Block> it = e.blockList().iterator();
         while (it.hasNext()) {
             Block b = it.next();
-            Material mat = b.getType();
-            if (mat.isAir()) continue;
+            WorldProfile p = profiles.getActive(b.getWorld().getName());
 
-            double mult = prof.blastFor(mat);
-            if (mult == 1.0) continue;
+            double mult = Math.max(0.0, p.blastFor(b.getType()));
+            if (mult <= 1.0) continue;
 
-            if (mult > 1.0) {
-                double surviveChance = 1.0 - (1.0 / mult);
-                surviveChance = Math.max(0.0, Math.min(1.0, surviveChance));
-                if (Math.random() < surviveChance) it.remove();
+            // keep block with probability (1 - 1/mult)
+            double breakChance = 1.0 / mult;
+            if (rng.nextDouble() > breakChance) {
+                it.remove();
             }
         }
     }

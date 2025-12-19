@@ -47,6 +47,11 @@ public record MainConfig(
         DamageMemoryConfig damageMemoryConfig,
 
         // Profiles
+        boolean regionBindingEnabled,
+        Map<String, Map<String, String>> regionBindingsPerWorld,
+        boolean hpActionbarEnabled,
+        String hpActionbarFormat,
+
         Map<String, String> activeProfilePerWorld
 ) {
     public record ToolMultipliers(
@@ -175,7 +180,7 @@ public record MainConfig(
             }
         }
 
-        boolean hpEnabled = cfg.getBoolean("features.mode", "MULTIPLIER").equalsIgnoreCase("HP")
+        boolean hpEnabled = "HP".equalsIgnoreCase(cfg.getString("features.mode", "MULTIPLIER"))
                 && cfg.getBoolean("hp_mode.enabled", false);
 
         double hpPerHardness = cfg.getDouble("hp_mode.defaults.hp_per_hardness", 50.0);
@@ -202,6 +207,25 @@ public record MainConfig(
         int crackRadius = Math.max(8, cfg.getInt("damage_memory.cracks.broadcast_radius", 64));
         DamageMemoryConfig dmc = new DamageMemoryConfig(memMode, memSeconds, saveDisk, saveEvery, cracks, crackRadius);
 
+// WG region bindings
+boolean regionBindingEnabled = cfg.getBoolean("region_profile_binding.enabled", false);
+Map<String, Map<String, String>> regionBindingsPerWorld = new HashMap<>();
+ConfigurationSection rbw = cfg.getConfigurationSection("region_profile_binding.worlds");
+if (rbw != null) {
+    for (String world : rbw.getKeys(false)) {
+        ConfigurationSection regions = rbw.getConfigurationSection(world + ".regions");
+        if (regions == null) continue;
+        Map<String, String> map = new HashMap<>();
+        for (String regionId : regions.getKeys(false)) {
+            map.put(regionId, regions.getString(regionId));
+        }
+        regionBindingsPerWorld.put(world, map);
+    }
+}
+
+boolean hpActionbarEnabled = cfg.getBoolean("hp_actionbar.enabled", false);
+String hpActionbarFormat = cfg.getString("hp_actionbar.format", "&cHP &7[&f{hp}&7/&f{max}&7] &8- &f{block}");
+
         Map<String, String> active = new HashMap<>();
         ConfigurationSection sec = cfg.getConfigurationSection("profiles.active_per_world");
         if (sec != null) {
@@ -216,7 +240,13 @@ public record MainConfig(
                 guiEnabled, guiTitle, guiRows, guiRequirePerm, guiPerm,
                 eventsEnabled, zone, schedules,
                 hpEnabled, hpCfg, dmgMemEnabled, dmc,
+                regionBindingEnabled, regionBindingsPerWorld,
+                hpActionbarEnabled, hpActionbarFormat,
                 active);
+    }
+
+    public Map<String, String> regionBindingsForWorld(String world) {
+        return regionBindingsPerWorld.getOrDefault(world, Map.of());
     }
 
     public String activeProfileForWorld(String world) {
