@@ -1,40 +1,37 @@
 # ============================================================
-# BlockDurabilityTweaks (1.20.1)
-# Stage 1+2: Config foundation + Per-tool multipliers
+# BlockDurabilityTweaks (1.20.1) - Stages 1-6
 # ============================================================
+# Vanilla-by-default:
+# - Active profile is 'vanilla' unless you load a different one.
+# - vanilla profile has multipliers 1.0 and no overrides.
 #
-# DESIGN GOALS
-# - "Vanilla by default": nothing changes unless you load a non-vanilla profile.
-# - Clear toggles: features can be enabled/disabled without deleting config.
-# - Structured per-world profiles:
-#     plugins/BlockDurabilityTweaks/worlds/<world>/profiles/<profile>.yml
-# - Vanilla reference dump:
-#     plugins/BlockDurabilityTweaks/worlds/<world>/vanilla.yml
+# Folder layout (auto-generated):
+#   plugins/BlockDurabilityTweaks/
+#     config.yml
+#     README-GENERATED.txt
+#     worlds/<world>/vanilla.yml
+#     worlds/<world>/profiles/<profile>.yml
+#     worlds/<world>/damage.yml           (only if persistent damage enabled)
 #
-# QUICK START
-# 1) Start server once (generates folders + vanilla.yml + vanilla profile)
-# 2) Copy vanilla profile to a new name:
-#      worlds/world/profiles/rust_hardcore.yml
-#    Edit multipliers/overrides there
-# 3) Load it:
-#      /blockdurability world load world rust_hardcore
-#
-# COMMANDS
+# Core commands:
 # - /blockdurability info
 # - /blockdurability reload
+# - /blockdurability gui
 # - /blockdurability world list [world]
 # - /blockdurability world load <world> <profile>
 # - /blockdurability world save <world> <profile>
 # - /blockdurability world reset <world>
 # - /blockdurability world vanilla <world>
+# - /blockdurability events list
+# - /blockdurability events run <name>
+# - /blockdurability events stop <name>
 #
 # ------------------------------------------------------------
 # FEATURE TOGGLES
 # ------------------------------------------------------------
 features:
-  # Mode is future-proofed:
-  # - MULTIPLIER: Uses your profile multipliers/overrides (current system)
-  # - HP: Rust-style block HP system (Stage 6 - not yet)
+  # MULTIPLIER = profile hardness/blast multipliers (and overrides)
+  # HP         = Rust-style block HP (see hp_mode section)
   mode: MULTIPLIER  # MULTIPLIER | HP
 
   explosions:
@@ -47,58 +44,114 @@ features:
     animation_radius: 64
     clear_cracks_on_abort: true
 
-  # Stage 2: Per-tool multipliers (netherite vs iron etc)
   per_tool_multipliers: false
-
-  # Stage 3 (later): Per-biome modifiers
   per_biome_modifiers: false
-
-  # Stage 4 (later): GUI selector
   gui_profile_selector: false
-
-  # Stage 5 (later): Timed profile events
   timed_profile_events: false
-
-  # Stage 6 (later): Remembered block damage / HP persistence
   persistent_block_damage: false
 
 worldguard:
   respect_worldguard: true
 
 profiles:
-  # Which profile is active per world.
-  # If a world is missing here, it defaults to "vanilla".
   active_per_world:
     world: vanilla
 
 # ------------------------------------------------------------
-# PER-TOOL MULTIPLIERS (Stage 2)
+# STAGE 2: PER-TOOL MULTIPLIERS
 # ------------------------------------------------------------
-# Applied only when features.per_tool_multipliers = true
-#
-# How it works (MULTIPLIER mode):
-# - The profile provides a hardness multiplier/override (e.g. 2.0 = twice as long)
-# - The tool multiplier multiplies that again (e.g. iron pickaxe 1.30)
-# - Final mining slowdown = profileHardness * toolMultiplier
-#
-# Notes:
-# - This controller only SLOWS mining when final multiplier > 1.0.
-#   (values <= 1.0 behave vanilla)
-# - You can define ANY tool item here, not just pickaxes.
 tool_multipliers:
   enabled: false
   default: 1.0
-
   by_tool:
     WOODEN_PICKAXE: 2.00
     STONE_PICKAXE: 1.60
     IRON_PICKAXE: 1.30
     DIAMOND_PICKAXE: 1.15
     NETHERITE_PICKAXE: 1.10
-
-  # Optional: Efficiency scales the tool multiplier per level (multiplicative).
-  # Example: per_level 0.92 means each level multiplies toolMult by 0.92:
-  #   L1: x0.92, L2: x0.8464, L3: x0.778..., etc.
   efficiency:
     enabled: true
     per_level: 0.92
+
+# ------------------------------------------------------------
+# STAGE 3: PER-BIOME MODIFIERS
+# ------------------------------------------------------------
+# Applied to mining only.
+# MULTIPLIER mode: finalHardnessMultiplier *= biomeMultiplier
+# HP mode: damage per tick *= (1 / biomeMultiplier) by default (configurable below)
+biome_modifiers:
+  enabled: false
+  default: 1.0
+  by_biome:
+    DESERT: 1.15
+    BADLANDS: 1.25
+    SWAMP: 0.95
+  hp_mode_damage_behavior: "DIVIDE" # MULTIPLY | DIVIDE
+  # DIVIDE = higher biome multiplier makes blocks tougher (less damage)
+  # MULTIPLY = higher biome multiplier makes blocks weaker (more damage)
+
+# ------------------------------------------------------------
+# STAGE 4: GUI PROFILE SELECTOR
+# ------------------------------------------------------------
+gui:
+  enabled: false
+  title: "&bDurability Profiles"
+  rows: 6
+  require_permission: true
+  permission: "blockdurabilitytweaks.gui.open"
+
+# ------------------------------------------------------------
+# STAGE 5: TIMED PROFILE EVENTS
+# ------------------------------------------------------------
+events:
+  enabled: false
+  timezone: "Europe/London"
+  # Schedules are checked once per minute.
+  # Supported formats:
+  # - start: "DAILY HH:MM" and either duration_minutes OR end: "DAILY HH:MM"
+  # - start: "MON HH:MM" (MON,TUE,WED,THU,FRI,SAT,SUN)
+  # - end can also be "MON HH:MM"
+  schedules:
+    WeekendHardcore:
+      world: "world"
+      profile: "rust_hardcore"
+      start: "FRI 19:00"
+      end: "SUN 23:00"
+
+    RaidHour:
+      world: "world"
+      profile: "raid_hour"
+      start: "DAILY 20:00"
+      duration_minutes: 60
+
+# ------------------------------------------------------------
+# STAGE 6: HP MODE + DAMAGE MEMORY
+# ------------------------------------------------------------
+hp_mode:
+  enabled: false
+  defaults:
+    # If no per-block HP is configured, HP is derived from vanilla hardness:
+    hp_per_hardness: 50.0
+    min_hp: 10
+    max_hp: 5000
+
+  # Optional explicit HP by block
+  by_block:
+    OBSIDIAN: 4000
+    STONE: 200
+
+damage_memory:
+  enabled: false
+  # How damage behaves when nobody mines the block
+  decay:
+    mode: "REGEN"   # REGEN | DECAY | NONE
+    seconds: 120
+
+  persistence:
+    save_to_disk: false
+    save_interval_seconds: 60
+
+  # Crack visuals (ProtocolLib)
+  cracks:
+    enabled: true
+    broadcast_radius: 64
